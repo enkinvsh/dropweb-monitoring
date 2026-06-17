@@ -37,6 +37,7 @@ Remnawave-панель
 ├── docker-compose.yml                              # prometheus + grafana; подключается к внешней remnawave-network
 ├── .env                                            # GF_SECURITY_ADMIN_PASSWORD, PANEL_HOST (в .gitignore)
 ├── .env.example                                    # шаблон
+├── setup.sh                                        # интерактивный визард установки (ключ + туннель + деплой)
 ├── deploy.sh                                       # синхронизация конфигов, рендер кредов на хосте, docker compose up -d
 ├── Makefile                                        # ops-команды
 ├── prometheus/
@@ -57,6 +58,16 @@ Remnawave-панель
 ---
 
 ## <img src="assets/icons/rocket-01.svg" width="24" alt="" /> Развёртывание
+
+**Быстрый старт.** Интерактивный визард прокинет ваш SSH-ключ в панель (`ssh-copy-id`), пропишет alias с туннелем в `~/.ssh/config`, проверит панель, сгенерит пароль Grafana и задеплоит:
+
+```bash
+./setup.sh
+```
+
+Дальше — `ssh <alias>` → `http://localhost:3001`.
+
+### Ручная установка
 
 **Требования**
 

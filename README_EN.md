@@ -37,6 +37,7 @@ Everything binds to `127.0.0.1` on the panel host. Access from your workstation 
 ├── docker-compose.yml                              # prometheus + grafana; joins external remnawave-network
 ├── .env                                            # GF_SECURITY_ADMIN_PASSWORD, PANEL_HOST (gitignored)
 ├── .env.example                                    # template
+├── setup.sh                                        # interactive install wizard (key + tunnel + deploy)
 ├── deploy.sh                                       # sync configs, render creds on host, docker compose up -d
 ├── Makefile                                        # ops shortcuts
 ├── prometheus/
@@ -57,6 +58,16 @@ Everything binds to `127.0.0.1` on the panel host. Access from your workstation 
 ---
 
 ## <img src="assets/icons/rocket-01.svg" width="24" alt="" /> Deploy
+
+**Quick start.** An interactive wizard installs your SSH key on the panel (`ssh-copy-id`), writes the tunnel alias to `~/.ssh/config`, verifies the panel, generates a Grafana password and deploys:
+
+```bash
+./setup.sh
+```
+
+Then `ssh <alias>` → `http://localhost:3001`.
+
+### Manual setup
 
 **Prerequisites**
 
