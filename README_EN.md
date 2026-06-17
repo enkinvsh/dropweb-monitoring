@@ -87,6 +87,8 @@ cp .env.example .env
 
 Override host with `HOST=...`, e.g. `make deploy HOST=other-alias`.
 
+**Multiple panels.** Create `.env.<host>` (e.g. `.env.ranetka-panel`) with its own `GF_SECURITY_ADMIN_PASSWORD`, then `./deploy.sh <host>` — it picks up that file instead of `.env`. Each panel's metrics are read from its own host.
+
 ---
 
 ## <img src="assets/icons/key-01.svg" width="24" alt="" /> Access

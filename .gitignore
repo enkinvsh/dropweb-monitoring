@@ -1,5 +1,7 @@
 # secrets / generated (rendered on the panel host)
 .env
+.env.*
+!.env.example
 prometheus/metrics_pass
 prometheus/prometheus.yml
 

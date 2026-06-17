@@ -87,6 +87,8 @@ cp .env.example .env
 
 Переопределить хост: `HOST=...`, например `make deploy HOST=other-alias`.
 
+**Несколько панелей.** Создайте `.env.<host>` (например `.env.ranetka-panel`) со своим `GF_SECURITY_ADMIN_PASSWORD`, затем `./deploy.sh <host>` — он подхватит этот файл вместо `.env`. Метрики каждой панели читаются с её собственного хоста.
+
 ---
 
 ## <img src="assets/icons/key-01.svg" width="24" alt="" /> Доступ

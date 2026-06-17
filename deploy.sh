@@ -9,6 +9,9 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 [ -f "$HERE/.env" ] && { set -a; . "$HERE/.env"; set +a; }
 HOST="${1:-${PANEL_HOST:-remnawave-panel}}"
+# per-host config: .env.<host> overrides .env (multi-panel support)
+ENVFILE="$HERE/.env"
+[ -f "$HERE/.env.$HOST" ] && ENVFILE="$HERE/.env.$HOST"
 DEST="/opt/monitoring"
 SSH_OPTS=(-o ClearAllForwardings=yes)
 
@@ -23,7 +26,7 @@ scp -q "${SSH_OPTS[@]}" "$HERE/prometheus/alerts.yml"                           
 scp -q "${SSH_OPTS[@]}" "$HERE/grafana/provisioning/datasources/prometheus.yml" "$HOST:$DEST/grafana/provisioning/datasources/"
 scp -q "${SSH_OPTS[@]}" "$HERE/grafana/provisioning/dashboards/provider.yml"    "$HOST:$DEST/grafana/provisioning/dashboards/"
 scp -q "${SSH_OPTS[@]}" "$HERE"/grafana/dashboards/*.json                       "$HOST:$DEST/grafana/dashboards/"
-scp -q "${SSH_OPTS[@]}" "$HERE/.env"                                            "$HOST:$DEST/.env"
+scp -q "${SSH_OPTS[@]}" "$ENVFILE"                                            "$HOST:$DEST/.env"
 
 echo ">> render metrics creds from the panel's /opt/remnawave/.env (nothing printed, nothing stored in repo)"
 ssh "${SSH_OPTS[@]}" "$HOST" 'bash -s' <<'REMOTE'
