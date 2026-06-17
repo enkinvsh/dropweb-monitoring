@@ -1,4 +1,4 @@
-# Self-contained monitoring for the Remnawave panel (dropweb-panel).
+# Self-contained monitoring for a Remnawave panel.
 # Attaches to the existing `remnawave-network` and scrapes remnawave:3001/metrics.
 # Does NOT touch the Remnawave stack. Project: monitoring.
 services:

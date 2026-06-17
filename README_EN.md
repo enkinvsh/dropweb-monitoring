@@ -26,7 +26,7 @@ Remnawave panel
   browser @ localhost:3001
 ```
 
-Everything binds to `127.0.0.1` on the panel host. Access from your workstation goes through the SSH tunnel defined for `dropweb-panel`. Host port 3001 is already taken by the panel's metrics endpoint, so Grafana publishes on 3002; the tunnel maps workstation `3001 -> host 3002`.
+Everything binds to `127.0.0.1` on the panel host. Access from your workstation goes through an SSH tunnel to the panel host (the alias in `PANEL_HOST`). Host port 3001 is already taken by the panel's metrics endpoint, so Grafana publishes on 3002; the tunnel maps workstation `3001 -> host 3002`.
 
 ---
 
@@ -60,7 +60,7 @@ Everything binds to `127.0.0.1` on the panel host. Access from your workstation 
 
 **Prerequisites**
 
-- SSH host alias `dropweb-panel` configured
+- an SSH alias to your panel host in `~/.ssh/config` with port forwarding (see Access); its name goes in `PANEL_HOST`
 - Remnawave panel running with metrics enabled
 - Docker network `remnawave-network` present on the host
 
@@ -91,7 +91,17 @@ Override host with `HOST=...`, e.g. `make deploy HOST=other-alias`.
 
 ## <img src="assets/icons/key-01.svg" width="24" alt="" /> Access
 
-Open the SSH tunnel to `dropweb-panel`, then:
+Forward the ports to the panel host in `~/.ssh/config` (`PANEL_HOST` is this alias name):
+
+```
+Host remnawave-panel
+  HostName <panel-ip>
+  User root
+  LocalForward 3001 127.0.0.1:3002   # Grafana (listens on 3002 on the host)
+  LocalForward 9090 127.0.0.1:9090   # Prometheus
+```
+
+Then `ssh remnawave-panel` and open:
 
 | URL | What |
 |---|---|
