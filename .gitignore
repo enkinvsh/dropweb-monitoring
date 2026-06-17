@@ -1,0 +1,9 @@
+# secrets / generated (rendered on the panel host)
+.env
+prometheus/metrics_pass
+prometheus/prometheus.yml
+
+# backups / cruft
+*.bak
+*.bak.*
+.DS_Store

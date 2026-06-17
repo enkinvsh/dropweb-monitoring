@@ -1,0 +1,29 @@
+groups:
+  - name: remnawave
+    rules:
+      # panel /metrics endpoint unreachable
+      - alert: RemnawavePanelMetricsDown
+        expr: up{job="remnawave"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "Remnawave /metrics scrape failing"
+          description: "Prometheus cannot scrape the panel metrics endpoint for >2m."
+
+      # a single node reported down (node_name resolved via node_basic_info join)
+      - alert: RemnawaveNodeDown
+        expr: remnawave_node_status * on(node_uuid) group_left(node_name) remnawave_node_basic_info == 0
+        for: 3m
+        labels: { severity: critical }
+        annotations:
+          summary: "Remnawave node {{ $labels.node_name }} is down"
+          description: "Node {{ $labels.node_name }} (uuid {{ $labels.node_uuid }}) status=0 for >3m."
+
+      # panel-wide outage / scrape gap
+      - alert: RemnawaveAllNodesDown
+        expr: sum(remnawave_node_status) == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations:
+          summary: "ALL Remnawave nodes report down"
+          description: "No node reporting status=1 — panel-wide outage or scrape failure."
