@@ -4,6 +4,8 @@
 !.env.example
 prometheus/metrics_pass
 prometheus/prometheus.yml
+alertmanager/tg_bot_token
+alertmanager/tg_relay.env
 
 # backups / cruft
 *.bak

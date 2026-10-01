@@ -1,0 +1,19 @@
+# Only alerts labelled notify="telegram" are delivered; everything else goes to the null receiver.
+# Delivery = webhook to monitoring-tg-relay (alertmanager/tg_relay.py), which posts a Telegram rich
+# message in the Remnawave panel bot layout. Chat/thread/token are rendered for the relay by deploy.sh.
+route:
+  receiver: 'null'
+  group_by: ['alertname']
+  group_wait: 1m
+  group_interval: 10m
+  repeat_interval: 24h
+  routes:
+    - receiver: telegram
+      matchers: ['notify="telegram"']
+
+receivers:
+  - name: 'null'
+  - name: telegram
+    webhook_configs:
+      - url: http://monitoring-tg-relay:8080/alert
+        send_resolved: false

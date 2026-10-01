@@ -49,6 +49,47 @@ services:
         limits:
           memory: 256M
 
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: monitoring-alertmanager
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--cluster.listen-address='
+    ports:
+      - '127.0.0.1:9093:9093'
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    networks:
+      - remnawave-network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+  tg-relay:
+    # Alertmanager webhook -> Telegram rich message (alertmanager/tg_relay.py, stdlib only)
+    image: python:3.13-alpine
+    container_name: monitoring-tg-relay
+    restart: always
+    user: '65534:65534'
+    command: ['python', '-u', '/app/tg_relay.py']
+    env_file: ./alertmanager/tg_relay.env
+    environment:
+      - TG_TOKEN_FILE=/run/tg_bot_token
+      - LISTEN=0.0.0.0:8080
+    volumes:
+      - ./alertmanager/tg_relay.py:/app/tg_relay.py:ro
+      - ./alertmanager/tg_bot_token:/run/tg_bot_token:ro
+    networks:
+      - remnawave-network
+    deploy:
+      resources:
+        limits:
+          memory: 48M
+
 networks:
   remnawave-network:
     external: true
@@ -57,3 +98,4 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  alertmanager-data:
