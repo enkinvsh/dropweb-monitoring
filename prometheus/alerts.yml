@@ -27,3 +27,35 @@ groups:
         annotations:
           summary: "ALL Remnawave nodes report down"
           description: "No node reporting status=1 — panel-wide outage or scrape failure."
+
+  - name: dropweb-burn
+    rules:
+      # IP burn heuristic: node online collapsed vs the same time yesterday.
+      # Backtested on 15d: fires on every known burn (21-23.09, 28.09); also fires on planned user moves
+      # and stays up to ~24h after a burn (until yesterday's baseline drops) -> send_resolved is off.
+      - alert: NodeOnlineCollapsed
+        expr: |
+          (
+            (
+              avg_over_time(remnawave_node_online_users[15m])
+                / on(node_uuid) avg_over_time(remnawave_node_online_users[15m] offset 1d)
+            ) < 0.5
+            and on(node_uuid) avg_over_time(remnawave_node_online_users[15m] offset 1d) >= 15
+          ) * on(node_uuid) group_left(node_name, node_country_emoji, provider_name) remnawave_node_basic_info
+        for: 20m
+        labels: { severity: warning, notify: telegram }
+        annotations:
+          # emoji/tag/title/name/reason/provider = Telegram card fields (alertmanager/tg_relay.py)
+          emoji: "🚫"
+          tag: nodeOnlineCollapsed
+          title: Онлайн обвалился, похоже сгорел IP
+          name: "{{ $labels.node_country_emoji }} {{ $labels.node_name }}"
+          reason: >-
+            онлайн
+            {{ with printf `avg_over_time(remnawave_node_online_users{node_uuid="%s"}[15m])` $labels.node_uuid | query }}{{ . | first | value | printf "%.0f" }}{{ end }}
+            против
+            {{ with printf `avg_over_time(remnawave_node_online_users{node_uuid="%s"}[15m] offset 1d)` $labels.node_uuid | query }}{{ . | first | value | printf "%.0f" }}{{ end }}
+            вчера в это же время ({{ $value | humanizePercentage }}), держится 20+ мин
+          provider: "{{ $labels.provider_name | toUpper }}"
+          summary: "{{ $labels.node_name }}: онлайн {{ $value | humanizePercentage }} от вчерашнего"
+          description: "Онлайн упал больше чем вдвое к вчерашнему и держится 20 мин. Проверь: блок IP, плановый перенос юзеров или сбой ноды."
