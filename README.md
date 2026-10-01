@@ -43,6 +43,9 @@ Remnawave-панель
 ├── prometheus/
 │   ├── prometheus.yml.tmpl                         # шаблон скрейпа; рендерится в prometheus.yml на хосте (username подставляется)
 │   └── alerts.yml                                  # правила алертов
+├── alertmanager/
+│   ├── alertmanager.yml                            # роутинг: notify=telegram -> webhook в monitoring-tg-relay
+│   └── tg_relay.py                                 # webhook -> Telegram rich message (вёрстка бота панели); chat/thread/токен рендерятся на хосте
 ├── grafana/
 │   ├── provisioning/
 │   │   ├── datasources/
@@ -127,13 +130,21 @@ Host remnawave-panel
 
 ## <img src="assets/icons/chart-line-data-01.svg" width="24" alt="" /> Алерты
 
-Заданы в `prometheus/alerts.yml`, группа `remnawave`. Вычисляются Prometheus; видны в его UI и доступны для алертинга Grafana. Alertmanager не входит в комплект — подключите его отдельно для уведомлений.
+Заданы в `prometheus/alerts.yml`. Вычисляются Prometheus и уходят в `monitoring-alertmanager`. В Telegram доставляются только алерты с лейблом `notify: telegram`: Alertmanager шлёт их вебхуком в `monitoring-tg-relay` (`alertmanager/tg_relay.py`), а тот публикует rich message (`sendRichMessage`) в вёрстке бота панели: `эмодзи #тег`, заголовок, разделитель, строки `Key: value`. Если Telegram не примет rich message, уходит то же самое обычным HTML. Поля карточки задаются аннотациями правила: `emoji`, `tag`, `title`, `name`, `reason`, `provider`, `address`; `Last status change` берётся из `startsAt` (UTC). Чат и топик берутся из `TELEGRAM_NOTIFY_NODES` (`chat_id[:thread_id]`), токен из `TELEGRAM_BOT_TOKEN` в `/opt/remnawave/.env` панели. Проверить вёрстку без отправки: `python3 alertmanager/tg_relay.py --render < webhook.json`. Остальные алерты видны только в UI Prometheus/Alertmanager: о падении нод панель уведомляет сама.
 
-| Алерт | Выражение | For |
-|---|---|---|
-| `RemnawavePanelMetricsDown` | `up{job="remnawave"} == 0` | 2m |
-| `RemnawaveNodeDown` | `remnawave_node_status * on(node_uuid) group_left(node_name) remnawave_node_basic_info == 0` | 3m |
-| `RemnawaveAllNodesDown` | `sum(remnawave_node_status) == 0` | 2m |
+| Алерт | Выражение | For | Telegram |
+|---|---|---|---|
+| `RemnawavePanelMetricsDown` | `up{job="remnawave"} == 0` | 2m | нет |
+| `RemnawaveNodeDown` | `remnawave_node_status * on(node_uuid) group_left(node_name) remnawave_node_basic_info == 0` | 3m | нет |
+| `RemnawaveAllNodesDown` | `sum(remnawave_node_status) == 0` | 2m | нет |
+| `NodeOnlineCollapsed` | среднее `remnawave_node_online_users` за 15m < 0.5 × то же сутки назад, при вчерашнем ≥ 15 | 20m | да |
+
+`NodeOnlineCollapsed` ловит сгорание IP ноды. На истории за 15 дней он сработал на всех известных блокировках (21–23.09, 28.09). Он же срабатывает на плановый перенос юзеров. После события алерт держится до ~24 ч, пока не уйдёт вчерашняя база, поэтому сообщение приходит один раз (`repeat_interval: 24h`, без resolved). Заглушить ноду на время переезда:
+
+```bash
+docker exec monitoring-alertmanager amtool --alertmanager.url=http://localhost:9093 \
+  silence add alertname=NodeOnlineCollapsed node_name=de-001 --duration=26h --comment="переезд"
+```
 
 **Имена нод.** В Remnawave v2.7.0+ лейблы `node_name` и страны вынесены в `remnawave_node_basic_info` для снижения кардинальности. Чтобы получить читаемые имена в любом запросе, соединяйте по `node_uuid`:
 
