@@ -33,6 +33,8 @@ groups:
       # IP burn heuristic: node online collapsed vs the same time yesterday.
       # Backtested on 15d: fires on every known burn (21-23.09, 28.09); also fires on planned user moves
       # and stays up to ~24h after a burn (until yesterday's baseline drops) -> send_resolved is off.
+      # The panel drops node_basic_info from /metrics for one scrape every 30-50 min: join on its last
+      # value and keep_firing_for, so a blip does not restart the alert (new startsAt = a repeat card).
       - alert: NodeOnlineCollapsed
         expr: |
           (
@@ -41,8 +43,9 @@ groups:
                 / on(node_uuid) avg_over_time(remnawave_node_online_users[15m] offset 1d)
             ) < 0.5
             and on(node_uuid) avg_over_time(remnawave_node_online_users[15m] offset 1d) >= 15
-          ) * on(node_uuid) group_left(node_name, node_country_emoji, provider_name) remnawave_node_basic_info
+          ) * on(node_uuid) group_left(node_name, node_country_emoji, provider_name) last_over_time(remnawave_node_basic_info[10m])
         for: 20m
+        keep_firing_for: 30m
         labels: { severity: warning, notify: telegram }
         annotations:
           # emoji/tag/title/name/reason/provider = Telegram card fields (alertmanager/tg_relay.py)
