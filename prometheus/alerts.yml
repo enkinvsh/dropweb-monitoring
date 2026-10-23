@@ -32,7 +32,8 @@ groups:
     rules:
       # IP burn heuristic: node online collapsed vs the same time yesterday.
       # Backtested on 15d: fires on every known burn (21-23.09, 28.09); also fires on planned user moves
-      # and stays up to ~24h after a burn (until yesterday's baseline drops) -> send_resolved is off.
+      # and stays up to ~24h after a burn (until yesterday's baseline drops). Поэтому «Снят» не шлётся
+      # отдельным сообщением: relay тихо правит исходную карточку.
       # The panel drops node_basic_info from /metrics for one scrape every 30-50 min: join on its last
       # value and keep_firing_for, so a blip does not restart the alert (new startsAt = a repeat card).
       - alert: NodeOnlineCollapsed

@@ -130,7 +130,7 @@ Host remnawave-panel
 
 ## <img src="assets/icons/chart-line-data-01.svg" width="24" alt="" /> Алерты
 
-Заданы в `prometheus/alerts.yml`. Вычисляются Prometheus и уходят в `monitoring-alertmanager`. В Telegram доставляются только алерты с лейблом `notify: telegram`: Alertmanager шлёт их вебхуком в `monitoring-tg-relay` (`alertmanager/tg_relay.py`), а тот публикует rich message (`sendRichMessage`) в вёрстке бота панели: `эмодзи #тег`, заголовок, разделитель, строки `Key: value`. Если Telegram не примет rich message, уходит то же самое обычным HTML. Поля карточки задаются аннотациями правила: `emoji`, `tag`, `title`, `name`, `reason`, `provider`, `address`; `Last status change` берётся из `startsAt` (UTC). Чат и топик берутся из `TELEGRAM_NOTIFY_NODES` (`chat_id[:thread_id]`), токен из `TELEGRAM_BOT_TOKEN` в `/opt/remnawave/.env` панели. Проверить вёрстку без отправки: `python3 alertmanager/tg_relay.py --render < webhook.json`. Остальные алерты видны только в UI Prometheus/Alertmanager: о падении нод панель уведомляет сама.
+Заданы в `prometheus/alerts.yml`. Вычисляются Prometheus и уходят в `monitoring-alertmanager`. В Telegram доставляются только алерты с лейблом `notify: telegram`: Alertmanager шлёт их вебхуком в `monitoring-tg-relay` (`alertmanager/tg_relay.py`), а тот публикует rich message (`sendRichMessage`) в вёрстке бота панели: `эмодзи #тег`, заголовок, разделитель, строки `Key: value`. Если Telegram не примет rich message, уходит то же самое обычным HTML. Поля карточки задаются аннотациями правила: `emoji`, `tag`, `title`, `name`, `reason`, `provider`, `address`; `Last status change` берётся из `startsAt` (UTC). Чат и топик берутся из `TELEGRAM_NOTIFY_NODES` (`chat_id[:thread_id]`), токен из `TELEGRAM_BOT_TOKEN` в `/opt/remnawave/.env` панели. Одна группа Alertmanager = одна карточка: повтор группы нового сообщения не шлёт, а когда группа прошла целиком, relay правит её карточку в «❇️ Снят» с длительностью (номера карточек — `alertmanager/state/messages.json`). С `TG_BUTTONS=1` в `/opt/monitoring/.env` под карточкой «🔕 1 ч» / «🔕 до утра»: нажатия ловит мост PENA (`pena-tgbridge`, тот же бот) и ставит silence в этом Alertmanager; без моста кнопки не включать. Проверить вёрстку без отправки: `python3 alertmanager/tg_relay.py --render < webhook.json`. Остальные алерты видны только в UI Prometheus/Alertmanager: о падении нод панель уведомляет сама.
 
 | Алерт | Выражение | For | Telegram |
 |---|---|---|---|
@@ -139,7 +139,7 @@ Host remnawave-panel
 | `RemnawaveAllNodesDown` | `sum(remnawave_node_status) == 0` | 2m | нет |
 | `NodeOnlineCollapsed` | среднее `remnawave_node_online_users` за 15m < 0.5 × то же сутки назад, при вчерашнем ≥ 15 | 20m | да |
 
-`NodeOnlineCollapsed` ловит сгорание IP ноды. На истории за 15 дней он сработал на всех известных блокировках (21–23.09, 28.09). Он же срабатывает на плановый перенос юзеров. После события алерт держится до ~24 ч, пока не уйдёт вчерашняя база, поэтому сообщение приходит один раз (`repeat_interval: 24h`, без resolved). Заглушить ноду на время переезда:
+`NodeOnlineCollapsed` ловит сгорание IP ноды. На истории за 15 дней он сработал на всех известных блокировках (21–23.09, 28.09). Он же срабатывает на плановый перенос юзеров. После события алерт держится до ~24 ч, пока не уйдёт вчерашняя база, поэтому сообщение приходит один раз (`repeat_interval: 24h`), а «Снят» правит ту же карточку без звука. Заглушить ноду на время переезда:
 
 ```bash
 docker exec monitoring-alertmanager amtool --alertmanager.url=http://localhost:9093 \

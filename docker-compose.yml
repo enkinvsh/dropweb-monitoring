@@ -79,10 +79,13 @@ services:
     env_file: ./alertmanager/tg_relay.env
     environment:
       - TG_TOKEN_FILE=/run/tg_bot_token
+      - TG_STATE_FILE=/data/messages.json
       - LISTEN=0.0.0.0:8080
     volumes:
       - ./alertmanager/tg_relay.py:/app/tg_relay.py:ro
       - ./alertmanager/tg_bot_token:/run/tg_bot_token:ro
+      # номера отправленных карточек, чтобы «Снят» правил их; каталог создаёт деплой с владельцем 65534
+      - ./alertmanager/state:/data
     networks:
       - remnawave-network
     deploy:

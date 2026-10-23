@@ -43,7 +43,11 @@ tok=$(getv TELEGRAM_BOT_TOKEN); tgt=$(getv TELEGRAM_NOTIFY_NODES)
 [ -n "$tok" ] && [ -n "$tgt" ] || { echo "TELEGRAM_BOT_TOKEN / TELEGRAM_NOTIFY_NODES missing in $SRC" >&2; exit 1; }
 chat="${tgt%%:*}"; thread=""; [ "$tgt" != "$chat" ] && thread="${tgt#*:}"
 printf '%s' "$tok" > "$A/tg_bot_token"; chown 65534:65534 "$A/tg_bot_token"; chmod 600 "$A/tg_bot_token"
-printf 'TG_CHAT=%s\nTG_THREAD=%s\n' "$chat" "$thread" > "$A/tg_relay.env"; chmod 644 "$A/tg_relay.env"
+# TG_BUTTONS=1 в .env хоста: кнопки «🔕» под карточкой (нажатия ловит мост PENA, тот же бот)
+btn=$(grep -E '^TG_BUTTONS=' /opt/monitoring/.env 2>/dev/null | head -1 | cut -d= -f2- || true)
+printf 'TG_CHAT=%s\nTG_THREAD=%s\nTG_BUTTONS=%s\n' "$chat" "$thread" "$btn" > "$A/tg_relay.env"; chmod 644 "$A/tg_relay.env"
+# состояние relay (номера карточек): пишет контейнер под 65534
+install -d -o 65534 -g 65534 -m 700 "$A/state"
 rm -f "$A/alertmanager.yml.tmpl"
 REMOTE
 
